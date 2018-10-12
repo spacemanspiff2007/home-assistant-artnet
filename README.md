@@ -1,2 +1,27 @@
 # home-assistant-artnet
 Artnet integration for home-assistant
+
+### Usage
+Download (artnet.py)[https://github.com/spacemanspiff2007/home-assistant-artnet/blob/master/artnet.py] and put it in the *'custom_components/light'* directory.
+If there is no *'custom_components'* folder next to your configuration.yaml just create it with a subfolder *'light'*.
+
+### Configuration
+```yaml
+- platform: artnet
+  host: IP            # IP of Art-Net Node
+  max_fps: 25         # Max 25 packages to ArtNet Node per second
+  refresh_every: 120  # Resend values if no fades are running every x seconds
+  universes:          # Support for multiple universes
+    0:                # Nr of Universe (see configuration of your Art-Net Node)
+        devices:
+        # Dimmer
+        - channel: 128                  # first channel of dmx dimmer
+          name: my_dimmer               # name
+          type: dimmer                  # type
+          transition: 1                 # default duration of fades in sec
+        # RGB
+        - channel: 129
+          name: my_rgb_lamp
+          type: rgb
+          transition: 1
+```
