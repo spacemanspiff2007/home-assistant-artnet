@@ -24,4 +24,9 @@ If there is no *'custom_components'* folder next to your *configuration.yaml* ju
           name: my_rgb_lamp
           type: rgb
           transition: 1
+        # RGBW
+        - channel: 132
+          name: my_rgbw_lamp
+          type: rgbw
+          transition: 1
 ```
