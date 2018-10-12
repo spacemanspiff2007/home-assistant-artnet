@@ -3,7 +3,7 @@ Artnet integration for home-assistant
 
 ### Usage
 Download [artnet.py](https://github.com/spacemanspiff2007/home-assistant-artnet/blob/master/artnet.py) and put it in the *'custom_components/light'* directory.
-If there is no *'custom_components'* folder next to your configuration.yaml just create it with a subfolder *'light'*.
+If there is no *'custom_components'* folder next to your *configuration.yaml* just create it with a subfolder *'light'*.
 
 ### Configuration
 ```yaml
