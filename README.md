@@ -10,7 +10,7 @@ If there is no *'custom_components'* folder next to your *configuration.yaml* ju
 - platform: artnet
   host: IP            # IP of Art-Net Node
   max_fps: 25         # Max 25 packages to ArtNet Node per second
-  refresh_every: 120  # Resend values if no fades are running every x seconds
+  refresh_every: 120  # Resend values if no fades are running every x seconds, 0 disables automatic refresh
   universes:          # Support for multiple universes
     0:                # Nr of Universe (see configuration of your Art-Net Node)
         devices:
