@@ -40,14 +40,20 @@ CONF_NODE_UNIVERSES = 'universes'
 CONF_DEVICE_CHANNEL = 'channel'
 
 
-
-
-
 ARTNET_NODES = {}
+
+# Try global import, this also enables syntax highlighting
+pyartnet = None
+try:
+    import pyartnet
+except ModuleNotFoundError:
+    pass
 
 
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
-    import pyartnet
+    global pyartnet
+    if pyartnet is None:
+        import pyartnet
     
     import pprint
     for l in pprint.pformat(config).splitlines():
@@ -64,7 +70,6 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         ARTNET_NODES[id] = __node
     node = ARTNET_NODES[id]
     assert isinstance(node, pyartnet.ArtNetNode), type(node)
-
    
     device_list = []
     for universe_nr, universe_cfg in config[CONF_NODE_UNIVERSES].items():
@@ -92,7 +97,7 @@ class ArtnetBaseLight(light.Light):
     def __init__(self, name, **kwargs):
         self._name = name
 
-        self._channel = None    # type: pyartnet.DmxChannel
+        self._channel : pyartnet.DmxChannel = None
 
         self._brightness = 255
         self._fade_time  = kwargs[CONF_DEVICE_TRANSITION]
