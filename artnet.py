@@ -31,7 +31,7 @@ log.warning('TEST')
 
 
 REQUIREMENTS = [ 'pyartnet>=0.2.0']
-import pyartnet
+
 
 CONF_NODE_MAX_FPS = 'max_fps'
 CONF_NODE_REFRESH = 'refresh_every'
@@ -47,6 +47,7 @@ ARTNET_NODES = {}
 
 
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+    import pyartnet
     
     import pprint
     for l in pprint.pformat(config).splitlines():
@@ -91,7 +92,7 @@ class ArtnetBaseLight(light.Light):
     def __init__(self, name, **kwargs):
         self._name = name
 
-        self._channel : pyartnet.DmxChannel = None
+        self._channel = None    # type: pyartnet.DmxChannel
 
         self._brightness = 255
         self._fade_time  = kwargs[CONF_DEVICE_TRANSITION]
@@ -269,10 +270,6 @@ PLATFORM_SCHEMA = light.PLATFORM_SCHEMA.extend({
                     vol.Required(CONF_DEVICE_NAME): cv.string,
                     vol.Optional(CONF_DEVICE_FRIENDLY_NAME): cv.string,
                     vol.Optional(CONF_DEVICE_TYPE): vol.In([k.CONF_TYPE for k in __CLASS_LIST]),
-                    # vol.Optional(CONF_DEFAULT_LEVEL): cv.byte,
-                    # vol.Optional(ATTR_WHITE_VALUE): cv.byte,
-                    # vol.Optional(CONF_DEFAULT_COLOR): vol.All(
-                    #     vol.ExactSequence((cv.byte, cv.byte, cv.byte)), vol.Coerce(tuple)),
                     vol.Optional(CONF_DEVICE_TRANSITION, default=0): vol.All(vol.Coerce(float), vol.Range(min=0, max=999)),
                 }
             ])
