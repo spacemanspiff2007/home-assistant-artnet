@@ -1,11 +1,4 @@
-"""
-Home Assistant support for Art-Net/DMX lights over IP
 
-Date:     2018-01-10
-Homepage: https://github.com/jnimmo/hass-artnet
-Author:   James Nimmo
-
-"""
 import asyncio
 
 from homeassistant.components import light
