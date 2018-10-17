@@ -13,7 +13,7 @@ If there is no *'custom_components'* folder next to your *configuration.yaml* ju
   refresh_every: 120  # Resend values if no fades are running every x seconds, 0 disables automatic refresh
   universes:          # Support for multiple universes
     0:                # Nr of Universe (see configuration of your Art-Net Node)
-        devices:
+      devices:
         # Dimmer
         - channel: 128                  # first channel of dmx dimmer
           name: my_dimmer               # name
