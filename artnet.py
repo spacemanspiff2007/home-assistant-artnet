@@ -1,5 +1,6 @@
 
 import asyncio
+import typing
 
 from homeassistant.components import light
 
@@ -30,30 +31,35 @@ log.setLevel(logging.DEBUG)
 log.warning('TEST')
 
 
-REQUIREMENTS = [ 'pyartnet>=0.2.0']
+REQUIREMENTS = [ 'pyartnet>=0.3.0']
 
 
 CONF_NODE_MAX_FPS = 'max_fps'
 CONF_NODE_REFRESH = 'refresh_every'
 CONF_NODE_UNIVERSES = 'universes'
 
-CONF_DEVICE_CHANNEL = 'channel'
+CONF_DEVICE_CHANNEL    = 'channel'
+CONF_OUTPUT_CORRECTION = 'output_correction'
 
+
+
+AVAILABLE_CORRECTIONS = {'quadratic' : None, 'cubic' : None, 'quadruple' : None}
+
+
+# Import with syntax highlighting
+pyartnet = None
+if typing.TYPE_CHECKING:
+    import pyartnet
 
 ARTNET_NODES = {}
-
-# Try global import, this also enables syntax highlighting
-pyartnet = None
-try:
-    import pyartnet
-except ModuleNotFoundError:
-    pass
-
-
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     global pyartnet
     if pyartnet is None:
         import pyartnet
+        AVAILABLE_CORRECTIONS['quadratic'] = pyartnet.output_correction.quadratic
+        AVAILABLE_CORRECTIONS['cubic']     = pyartnet.output_correction.cubic
+        AVAILABLE_CORRECTIONS['quadruple'] = pyartnet.output_correction.quadruple
+    
     
     import pprint
     for l in pprint.pformat(config).splitlines():
@@ -77,6 +83,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             universe = node.get_universe(universe_nr)
         except KeyError:
             universe = node.add_universe(universe_nr)
+            universe.output_correction = AVAILABLE_CORRECTIONS.get(universe_cfg[CONF_OUTPUT_CORRECTION])
             
         for device in universe_cfg[CONF_DEVICES]:   # type: dict
             device = device.copy()
@@ -86,6 +93,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             # create device
             d = cls(**device)   # type: ArtnetBaseLight
             d._channel = universe.add_channel(device[CONF_DEVICE_CHANNEL], d.CHANNEL_WIDTH, d._name)
+            d._channel.output_correction = AVAILABLE_CORRECTIONS.get(device[CONF_OUTPUT_CORRECTION])
             
             device_list.append(d)
 
@@ -268,7 +276,7 @@ PLATFORM_SCHEMA = light.PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NODE_HOST): cv.string,
     vol.Required(CONF_NODE_UNIVERSES): {
         vol.All(int, vol.Range(min=0, max=1024)): {
-            
+            vol.Optional(CONF_OUTPUT_CORRECTION, default=None): vol.Any(None, vol.In(AVAILABLE_CORRECTIONS)),
             CONF_DEVICES: vol.All(cv.ensure_list, [
                 {
                     vol.Required(CONF_DEVICE_CHANNEL): vol.All(vol.Coerce(int), vol.Range(min=1, max=512)),
@@ -276,6 +284,7 @@ PLATFORM_SCHEMA = light.PLATFORM_SCHEMA.extend({
                     vol.Optional(CONF_DEVICE_FRIENDLY_NAME): cv.string,
                     vol.Optional(CONF_DEVICE_TYPE): vol.In([k.CONF_TYPE for k in __CLASS_LIST]),
                     vol.Optional(CONF_DEVICE_TRANSITION, default=0): vol.All(vol.Coerce(float), vol.Range(min=0, max=999)),
+                    vol.Optional(CONF_OUTPUT_CORRECTION, default=None): vol.Any(None, vol.In(AVAILABLE_CORRECTIONS)),
                 }
             ])
         },
