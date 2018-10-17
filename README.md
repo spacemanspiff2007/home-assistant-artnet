@@ -6,6 +6,8 @@ Download [artnet.py](https://github.com/spacemanspiff2007/home-assistant-artnet/
 If there is no *'custom_components'* folder next to your *configuration.yaml* just create it with a subfolder *'light'*.
 
 ### Configuration
+Add the following config to your ``` light: ``` configuration
+
 ```yaml
 - platform: artnet
   host: IP                              # IP of Art-Net Node
@@ -13,8 +15,8 @@ If there is no *'custom_components'* folder next to your *configuration.yaml* ju
   refresh_every: 120                    # Resend values if no fades are running every x seconds, 0 disables automatic refresh
   universes:                            # Support for multiple universes
     0:                                  # Nr of Universe (see configuration of your Art-Net Node)
-        output_correction: quadratic    # optional: output correction for the whole universe, will be used as default if nothing is set for the channel
-        devices:
+      output_correction: quadratic      # optional: output correction for the whole universe, will be used as default if nothing is set for the channel
+      devices:
         # Dimmer
         - channel: 128                  # first channel of dmx dimmer
           name: my_dimmer               # name
