@@ -34,3 +34,12 @@ Add the following config to your ``` light: ``` configuration
           type: rgbw
           transition: 1
 ```
+
+### Output correction
+The graph shows different output depending on the output correction.
+
+From left to right:
+Linear (nothing is set), quadratic, cubic then quadruple
+<img src='https://github.com/spacemanspiff2007/home-assistant-artnet/blob/master/curves.svg'>
+
+Quadratic or cubic results in much smoother and more pleasant fades when using LED Strips.
