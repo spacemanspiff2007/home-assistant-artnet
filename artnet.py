@@ -1,25 +1,16 @@
-
-import asyncio
+import time
 import typing
 
 from homeassistant.components import light
-
-# (ATTR_BRIGHTNESS, ATTR_ENTITY_ID, ATTR_HS_COLOR,
-#                                             ATTR_TRANSITION, ATTR_WHITE_VALUE, Light,
-#                                             PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS,
-#                                             SUPPORT_COLOR, SUPPORT_WHITE_VALUE,
-#                                             SUPPORT_TRANSITION)
-
-from homeassistant.const import CONF_HOST as CONF_NODE_HOST
-from homeassistant.const import CONF_PORT as CONF_NODE_PORT
-
 from homeassistant.const import CONF_DEVICES
-from homeassistant.const import CONF_NAME          as CONF_DEVICE_NAME
 from homeassistant.const import CONF_FRIENDLY_NAME as CONF_DEVICE_FRIENDLY_NAME
+from homeassistant.const import CONF_HOST as CONF_NODE_HOST
+from homeassistant.const import CONF_NAME          as CONF_DEVICE_NAME
+from homeassistant.const import CONF_PORT as CONF_NODE_PORT
 from homeassistant.const import CONF_TYPE          as CONF_DEVICE_TYPE
+
 CONF_DEVICE_TRANSITION = light.ATTR_TRANSITION
 
-from homeassistant.util.color import color_rgb_to_rgbw
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.color as color_util
 import voluptuous as vol
@@ -28,11 +19,10 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-log.warning('TEST')
+REQUIREMENTS = [ 'pyartnet>=0.5.0']
 
-
-REQUIREMENTS = [ 'pyartnet>=0.3.0']
-
+log.info( f'PyArtNet: {REQUIREMENTS[0]}')
+log.info( f'Version : 2018.10.18 - 16:22')
 
 CONF_NODE_MAX_FPS = 'max_fps'
 CONF_NODE_REFRESH = 'refresh_every'
@@ -43,7 +33,7 @@ CONF_OUTPUT_CORRECTION = 'output_correction'
 
 
 
-AVAILABLE_CORRECTIONS = {'quadratic' : None, 'cubic' : None, 'quadruple' : None}
+AVAILABLE_CORRECTIONS = { 'linear' : None, 'quadratic' : None, 'cubic' : None, 'quadruple' : None}
 
 
 # Import with syntax highlighting
@@ -92,7 +82,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
             
             # create device
             d = cls(**device)   # type: ArtnetBaseLight
-            d._channel = universe.add_channel(device[CONF_DEVICE_CHANNEL], d.CHANNEL_WIDTH, d._name)
+            d.set_channel( universe.add_channel(device[CONF_DEVICE_CHANNEL], d.CHANNEL_WIDTH, d._name))
             d._channel.output_correction = AVAILABLE_CORRECTIONS.get(device[CONF_OUTPUT_CORRECTION])
             
             device_list.append(d)
@@ -105,11 +95,21 @@ class ArtnetBaseLight(light.Light):
     def __init__(self, name, **kwargs):
         self._name = name
 
-        self._channel : pyartnet.DmxChannel = None
-
         self._brightness = 255
         self._fade_time  = kwargs[CONF_DEVICE_TRANSITION]
         self._state = False
+
+        # channel & notification callbacks
+        self._channel : pyartnet.DmxChannel = None
+        self._channel_last_update = 0
+
+    def set_channel(self, channel):
+        "Set the channel & the callbacks"
+        assert isinstance(channel, pyartnet.DmxChannel)
+        self._channel = channel
+        self._channel.callback_value_changed = self._channel_value_change
+        self._channel.callback_fade_finished = self._channel_fade_finish
+
     
     @property
     def name(self):
@@ -132,6 +132,7 @@ class ArtnetBaseLight(light.Light):
         data['dmx_channels'] = [k for k in range(self._channel.start, self._channel.start + self._channel.width, 1)]
         data['dmx_values']   = self._channel.get_channel_values()
         data[CONF_DEVICE_TRANSITION] = self._fade_time
+        self._channel_last_update = time.time()
         return data
 
     @property
@@ -139,6 +140,10 @@ class ArtnetBaseLight(light.Light):
         """Return true if light is on."""
         return self._state
     
+    @property
+    def force_update(self):
+        return True
+
     @property
     def should_poll(self):
         return False
@@ -150,6 +155,17 @@ class ArtnetBaseLight(light.Light):
     @fade_time.setter
     def fade_time(self, value):
         self._fade_time = value
+
+    def _channel_value_change(self):
+        "Shedule update while fade is running"
+        if time.time() - self._channel_last_update > 1.1:
+            self._channel_last_update = time.time()
+            self.async_schedule_update_ha_state()
+    
+    def _channel_fade_finish(self):
+        "Fade is finished -> shedule update"
+        self._channel_last_update = time.time()
+        self.async_schedule_update_ha_state()
 
     def get_target_values(self) -> list:
         "Return the Target DMX Values"
