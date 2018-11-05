@@ -19,7 +19,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-REQUIREMENTS = [ 'pyartnet>=0.5.0']
+REQUIREMENTS = [ 'pyartnet==0.5.0']
 
 log.info( f'PyArtNet: {REQUIREMENTS[0]}')
 log.info( f'Version : 2018.10.18 - 16:22')
